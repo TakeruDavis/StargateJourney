@@ -36,7 +36,9 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import net.povstalec.sgjourney.block_entities.BasicInterfaceEntity;
+import net.povstalec.sgjourney.block_entities.TransportRingsEntity;
 import net.povstalec.sgjourney.block_entities.stargate.MilkyWayStargateEntity;
+import net.povstalec.sgjourney.cctweaked.peripherals.BasicRingsPeripheral;
 import net.povstalec.sgjourney.init.BlockEntityInit;
 import net.povstalec.sgjourney.init.BlockInit;
 import net.povstalec.sgjourney.menu.BasicInterfaceMenu;
@@ -149,9 +151,20 @@ public class BasicInterfaceBlock extends BaseEntityBlock
 		
 		Direction direction = state.getValue(FACING);
 		BlockPos targetPos = pos.relative(direction);
-		
-		if(targetPos.equals(pos2) && level.getBlockEntity(pos) instanceof BasicInterfaceEntity basicInterface && basicInterface.updateInterface())
-			level.updateNeighborsAtExceptFromFacing(pos, state.getBlock(), state.getValue(FACING));
+
+		if (level.getBlockEntity(pos) instanceof BasicInterfaceEntity basicInterface) {
+			if (targetPos.equals(pos2) && basicInterface.updateInterface())
+				level.updateNeighborsAtExceptFromFacing(pos, state.getBlock(), state.getValue(FACING));
+			else if (level.getBlockEntity(targetPos) instanceof TransportRingsEntity rings) {
+				boolean wasPowered = basicInterface.isPowered();
+				boolean newPowered = level.hasNeighborSignal(pos) || level.hasNeighborSignal(pos.above());
+				if (wasPowered != newPowered) {
+					basicInterface.setPowered(newPowered);
+					if (newPowered)
+						rings.activate();
+				}
+			}
+		}
 	}
 	
 	@Nullable

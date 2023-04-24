@@ -27,6 +27,7 @@ public class BasicInterfaceEntity extends EnergyBlockEntity
 {
 	private int desiredSymbol = 0;
 	private int currentSymbol = 0;
+	private boolean powered = false;
 	private boolean rotate = false;
 	private boolean rotateClockwise = true;
 	
@@ -106,6 +107,14 @@ public class BasicInterfaceEntity extends EnergyBlockEntity
 		if(side == getDirection().getOpposite())
 			return false;
 		return true;
+	}
+
+	public void setPowered(boolean powered) {
+		this.powered = powered;
+	}
+
+	public boolean isPowered() {
+		return powered;
 	}
 
 	@Override

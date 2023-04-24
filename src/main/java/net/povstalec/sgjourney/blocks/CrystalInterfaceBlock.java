@@ -4,6 +4,7 @@ import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -23,10 +24,16 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import net.povstalec.sgjourney.block_entities.CrystalInterfaceEntity;
+import net.povstalec.sgjourney.block_entities.TransportRingsEntity;
 import net.povstalec.sgjourney.block_entities.stargate.MilkyWayStargateEntity;
+import net.povstalec.sgjourney.data.RingsNetwork;
 import net.povstalec.sgjourney.init.BlockEntityInit;
 import net.povstalec.sgjourney.init.BlockInit;
 import net.povstalec.sgjourney.menu.CrystalInterfaceMenu;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class CrystalInterfaceBlock extends BasicInterfaceBlock
 {
@@ -94,7 +101,46 @@ public class CrystalInterfaceBlock extends BasicInterfaceBlock
 			crystalInterface.setInputSignal(level.getBestNeighborSignal(pos));
 			if(targetPos.equals(pos2) && crystalInterface.updateInterface())
 				level.updateNeighborsAtExceptFromFacing(pos, state.getBlock(), state.getValue(FACING));
+			else if (level.getBlockEntity(targetPos) instanceof TransportRingsEntity rings) {
+				boolean wasPowered = crystalInterface.isPowered();
+				boolean newPowered = level.hasNeighborSignal(pos) || level.hasNeighborSignal(pos.above());
+
+				if (wasPowered != newPowered) {
+					crystalInterface.setPowered(newPowered);
+					if (newPowered) {
+						int signalStrength = level.getBestNeighborSignal(pos);
+						if (signalStrength >= 7) {
+							rings.activate(); //7 or higher connects to the closest rings
+						} else {
+							//TODO: signal strength 1-6 determines which location is used
+
+							CompoundTag tag = RingsNetwork.get(level).get6ClosestRingsFromTag(
+									level.dimension().location().toString(),
+									rings.getBlockPos(),
+									32000,
+									rings.getID()
+							);
+							List<String> tagList = tag.getAllKeys().stream().collect(Collectors.toList());
+
+							int ringsFound = tag.size();
+							BlockPos[] ringsPos = new BlockPos[6];
+
+							for (int i = 0; i < 6; i++) {
+								if (i < ringsFound) {
+									int[] coords = tag.getCompound(tagList.get(i)).getIntArray("Coordinates");
+									ringsPos[i] = new BlockPos(coords[0], coords[1], coords[2]);
+								}
+							}
+
+							if (signalStrength <= ringsFound)
+								rings.activate(ringsPos[signalStrength - 1]);
+						}
+					}
+				}
+			}
 		}
+
+
 	}
 	
 	@Nullable

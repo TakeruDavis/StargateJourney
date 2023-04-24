@@ -28,27 +28,11 @@ public class TransportRingsMethods
 		@Override
 		public MethodResult use(ILuaContext context, TransportRingsEntity rings, IArguments arguments) throws LuaException
 		{
-			Level level = Objects.requireNonNull(rings.getLevel());
-
-			CompoundTag tag = RingsNetwork.get(level).getClosestRingsFromTag(
-					level.dimension().location().toString(),
-					rings.getBlockPos(),
-					new CompoundTag(),
-					32000,
-					rings.getID()
-			);
-
-			List<String> tagList = tag.getAllKeys().stream().collect(Collectors.toList());
-
-			if(tag.size() > 0) {
-				int[] coords = tag.getCompound(tagList.get(0)).getIntArray("Coordinates");
-
-				context.executeMainThreadTask(() ->
-				{
-					rings.activate(new BlockPos(coords[0], coords[1], coords[2]));
-					return null;
-				});
-			};
+			context.executeMainThreadTask(() ->
+			{
+				rings.activate();
+				return null;
+			});
 
 			return MethodResult.of();
 		}
@@ -62,6 +46,7 @@ public class TransportRingsMethods
 			if (arguments.count() < 1) {
 				return super.use(context, rings, arguments);
 			} else {
+				//TODO: desiredPlatform determines which location is used
 				int desiredPlatform = arguments.getInt(0);
 
 				if (desiredPlatform < 1 || desiredPlatform > 6)

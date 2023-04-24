@@ -1,6 +1,7 @@
 package net.povstalec.sgjourney.block_entities;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
@@ -149,6 +150,24 @@ public class TransportRingsEntity extends SGJourneyBlockEntity
 	public void activate(BlockPos targetPos)
 	{
 		activate(targetPos, true);
+	}
+
+	public void activate()
+	{
+		CompoundTag tag = RingsNetwork.get(level).getClosestRingsFromTag(
+				level.dimension().location().toString(),
+				getBlockPos(),
+				new CompoundTag(),
+				32000,
+				getID()
+		);
+
+		List<String> tagList = tag.getAllKeys().stream().collect(Collectors.toList());
+
+		if(tag.size() > 0) {
+			int[] coords = tag.getCompound(tagList.get(0)).getIntArray("Coordinates");
+			activate(new BlockPos(coords[0], coords[1], coords[2]));
+		};
 	}
 	
 	public void deactivate()

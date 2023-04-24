@@ -3,21 +3,22 @@ package net.povstalec.sgjourney.cctweaked.peripherals;
 import dan200.computercraft.api.lua.*;
 import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IDynamicPeripheral;
-import net.povstalec.sgjourney.block_entities.BasicInterfaceEntity;
+import net.povstalec.sgjourney.block_entities.CrystalInterfaceEntity;
 import net.povstalec.sgjourney.block_entities.TransportRingsEntity;
 import net.povstalec.sgjourney.cctweaked.methods.InterfaceMethod;
-import net.povstalec.sgjourney.cctweaked.methods.TransportRingsMethods.*;
+import net.povstalec.sgjourney.cctweaked.methods.TransportRingsMethods;
 
 import java.util.HashMap;
 
-public class BasicRingsPeripheral extends BasicInterfacePeripheral implements IDynamicPeripheral
+public class CrystalRingsPeripheral extends CrystalInterfacePeripheral implements IDynamicPeripheral
 {
 	protected TransportRingsEntity rings;
-	private final HashMap<String, InterfaceMethod<TransportRingsEntity>> methods = new HashMap<String,InterfaceMethod<TransportRingsEntity>>();
+	private HashMap<String, InterfaceMethod<TransportRingsEntity>> methods = new HashMap<String,InterfaceMethod<TransportRingsEntity>>();
 
-	public BasicRingsPeripheral(BasicInterfaceEntity basicInterface, TransportRingsEntity rings)
+	public CrystalRingsPeripheral(CrystalInterfaceEntity crystalInterface, TransportRingsEntity rings)
 	{
-		super(basicInterface);
+		super(crystalInterface);
+		this.crystalInterface = crystalInterface;
 		this.rings = rings;
 		
 		registerTransportRingsMethods();
@@ -41,7 +42,7 @@ public class BasicRingsPeripheral extends BasicInterfacePeripheral implements ID
 	//============================================================================================
 	//*****************************************CC: Tweaked****************************************
 	//============================================================================================
-	
+
 	@LuaFunction
 	public final boolean isActivated()
 	{
@@ -60,7 +61,8 @@ public class BasicRingsPeripheral extends BasicInterfacePeripheral implements ID
 	}
 
 	@LuaFunction
-	public final float getProgress() {
+	public final float getProgress()
+	{
 		return rings.progress;
 	}
 
@@ -69,9 +71,9 @@ public class BasicRingsPeripheral extends BasicInterfacePeripheral implements ID
 	{
 		methods.put(function.getName(), (InterfaceMethod<TransportRingsEntity>) function);
 	}
-	
+
 	public void registerTransportRingsMethods()
 	{
-		registerTransportRingsMethod(new ActivateClosest());
+		registerTransportRingsMethod(new TransportRingsMethods.ActivateTargetted());
 	}
 }

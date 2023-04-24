@@ -4,6 +4,7 @@ import dan200.computercraft.api.peripheral.IPeripheral;
 import net.minecraftforge.common.util.LazyOptional;
 import net.povstalec.sgjourney.block_entities.CrystalInterfaceEntity;
 import net.povstalec.sgjourney.block_entities.EnergyBlockEntity;
+import net.povstalec.sgjourney.block_entities.TransportRingsEntity;
 import net.povstalec.sgjourney.block_entities.stargate.AbstractStargateEntity;
 
 public class CrystalPeripheralHolder
@@ -21,6 +22,8 @@ public class CrystalPeripheralHolder
 	{
 		if(energyBlockEntity instanceof AbstractStargateEntity stargate)
 			return new CrystalStargatePeripheral(crystalInterface, stargate);
+		else if(energyBlockEntity instanceof TransportRingsEntity transportRings)
+			return new CrystalRingsPeripheral(crystalInterface, transportRings);
 
 		return new CrystalInterfacePeripheral(crystalInterface);
 	}

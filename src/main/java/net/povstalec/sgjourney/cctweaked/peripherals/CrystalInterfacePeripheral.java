@@ -32,10 +32,5 @@ public class CrystalInterfacePeripheral extends BasicInterfacePeripheral
 	//============================================================================================
 	//*****************************************CC: Tweaked****************************************
 	//============================================================================================
-	
-	@LuaFunction
-	public String getLocalAddress()
-	{
-		return crystalInterface.getLocalAddress();
-	}
+
 }

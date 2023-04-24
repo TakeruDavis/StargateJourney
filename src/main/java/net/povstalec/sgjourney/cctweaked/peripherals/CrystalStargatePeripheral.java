@@ -100,6 +100,11 @@ public class CrystalStargatePeripheral extends CrystalInterfacePeripheral implem
 			return null;
 		});
 	}
+	@LuaFunction
+	public String getLocalAddress()
+	{
+		return crystalInterface.getLocalAddress();
+	}
 	
 	@SuppressWarnings("unchecked")
 	private <Stargate extends AbstractStargateEntity> void registerMilkyWayStargateMethod(InterfaceMethod<Stargate> function)

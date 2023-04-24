@@ -28,6 +28,8 @@ public class CrystalInterfaceEntity extends BasicInterfaceEntity
 	private final ItemStackHandler itemHandler = createHandler();
 	private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> itemHandler);
 	CrystalPeripheralHolder peripheralHolder;
+
+	private int inputSignal = 0;
 	
 	public CrystalInterfaceEntity(BlockPos pos, BlockState state)
 	{
@@ -36,7 +38,6 @@ public class CrystalInterfaceEntity extends BasicInterfaceEntity
 		if(ModList.get().isLoaded("computercraft"))
 			peripheralHolder = new CrystalPeripheralHolder(this);
 	}
-
 	
 	@Override
 	public void load(CompoundTag nbt)
@@ -72,11 +73,19 @@ public class CrystalInterfaceEntity extends BasicInterfaceEntity
 	public boolean updateInterface()
 	{
 		if(peripheralHolder != null)
-			peripheralHolder.resetInterface();
+			return peripheralHolder.resetInterface();
 		
-		return false;
+		return true;
 	}
-	
+
+	public void setInputSignal(int inputSignal) {
+		this.inputSignal = inputSignal;
+	}
+
+	public int getInputSignal() {
+		return inputSignal;
+	}
+
 	//============================================================================================
 	//******************************************Storage*******************************************
 	//============================================================================================
@@ -122,7 +131,7 @@ public class CrystalInterfaceEntity extends BasicInterfaceEntity
 	{
 		if(stack.getItem() == ItemInit.MEMORY_CRYSTAL.get())
 			return true;
-		else if(stack.getItem() == ItemInit.TRANSPORTATION_CRYSTAL.get())
+		else if(stack.getItem() == ItemInit.MATERIALIZATION_CRYSTAL.get())
 			return true;
 		else if(stack.getItem() == ItemInit.ENERGY_CRYSTAL.get())
 			return true;

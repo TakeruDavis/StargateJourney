@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -20,6 +21,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -31,23 +33,24 @@ import net.povstalec.sgjourney.init.ItemInit;
 import net.povstalec.sgjourney.init.SoundInit;
 import net.povstalec.sgjourney.items.crystals.EnergyCrystalItem;
 import net.povstalec.sgjourney.misc.ArrayHelper;
+import net.povstalec.sgjourney.stargate.Stargate;
 
 public abstract class AbstractDHDEntity extends EnergyBlockEntity
 {
 	private AbstractStargateEntity stargate = null;
 	
-	private final ItemStackHandler itemHandler = createHandler();
-	private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> itemHandler);
+	protected final ItemStackHandler itemHandler = createHandler();
+	protected final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> itemHandler);
 	
-	private boolean hasControlCrystal = false;
+	protected boolean enableAdvancedProtocols = false;
 	
-	private int[] memoryCrystals = new int[0];
+	protected int[] memoryCrystals = new int[0];
+	protected int[] controlCrystals = new int[0];
+	protected int[] energyCrystals = new int[0];
+	protected int desiredEnergyLevel = 0;
+	protected int maxEnergyTransfer = 0;
 	
-	private int[] energyCrystals = new int[0];
-	private int desiredEnergyLevel = 0;
-	private int maxEnergyTransfer = 0;
-	
-	private int[] communicationCrystals = new int[0];
+	protected int[] communicationCrystals = new int[0];
 	
 	public AbstractDHDEntity(BlockEntityType<?> blockEntity, BlockPos pos, BlockState state)
 	{
@@ -88,10 +91,7 @@ public abstract class AbstractDHDEntity extends EnergyBlockEntity
 				@Override
 				public boolean isItemValid(int slot, @Nonnull ItemStack stack)
 				{
-					if(slot == 0)
-						return stack.getItem() == ItemInit.LARGE_CONTROL_CRYSTAL.get();
-					else
-						return isValidCrystal(stack);
+					return isSlotValid(slot, stack);
 				}
 				
 				// Limits the number of items per slot
@@ -115,23 +115,14 @@ public abstract class AbstractDHDEntity extends EnergyBlockEntity
 			};
 	}
 	
-	private boolean isValidCrystal(ItemStack stack)
-	{
-		if(stack.getItem() == ItemInit.MEMORY_CRYSTAL.get())
-			return true;
-		else if(stack.getItem() == ItemInit.ENERGY_CRYSTAL.get())
-			return true;
-		else if(stack.getItem() == ItemInit.COMMUNICATION_CRYSTAL.get())
-			return true;
-		
-		return false;
-	}
+	protected abstract boolean isSlotValid(int slot, @Nonnull ItemStack stack);
 	
 	public void recalculateCrystals()
 	{
 		// Check if the DHD has a Control Crystal
-		this.hasControlCrystal = !itemHandler.getStackInSlot(0).isEmpty();
+		this.enableAdvancedProtocols = !itemHandler.getStackInSlot(0).isEmpty();
 		this.memoryCrystals = new int[0];
+		this.controlCrystals = new int[0];
 		this.energyCrystals = new int[0];
 		this.desiredEnergyLevel = 0;
 		this.maxEnergyTransfer = 0;
@@ -142,7 +133,9 @@ public abstract class AbstractDHDEntity extends EnergyBlockEntity
 		{
 			Item item = itemHandler.getStackInSlot(i).getItem();
 			
-			if(item == ItemInit.MEMORY_CRYSTAL.get())
+			if(item == ItemInit.CONTROL_CRYSTAL.get())
+				this.controlCrystals = ArrayHelper.growIntArray(this.controlCrystals, i);
+			else if(item == ItemInit.MEMORY_CRYSTAL.get())
 				this.memoryCrystals = ArrayHelper.growIntArray(this.memoryCrystals, i);
 			else if(item == ItemInit.ENERGY_CRYSTAL.get())
 				this.energyCrystals = ArrayHelper.growIntArray(this.energyCrystals, i);
@@ -162,14 +155,19 @@ public abstract class AbstractDHDEntity extends EnergyBlockEntity
 				switch(mode)
 				{
 				case ENERGY_STORAGE:
-					this.desiredEnergyLevel += EnergyCrystalItem.MAX_ENERGY;
+					this.desiredEnergyLevel += ItemInit.ENERGY_CRYSTAL.get().getMaxStorage();
 					break;
 				case ENERGY_TRANSFER:
-					this.maxEnergyTransfer += EnergyCrystalItem.MAX_TRANSFER;
+					this.maxEnergyTransfer += ItemInit.ENERGY_CRYSTAL.get().getMaxTransfer();
 					break;
 				}
 			}
 		}
+	}
+	
+	public int getMaxDistance()
+	{
+		return this.communicationCrystals.length * ItemInit.COMMUNICATION_CRYSTAL.get().getMaxDistance();
 	}
 	
 	@Nonnull
@@ -288,7 +286,15 @@ public abstract class AbstractDHDEntity extends EnergyBlockEntity
 		{
 			if(symbol == 0)
 				level.playSound((Player)null, this.getBlockPos(), SoundInit.MILKY_WAY_DHD_ENTER.get(), SoundSource.BLOCKS, 0.25F, 1F);
-			stargate.engageSymbol(symbol);
+			Stargate.Feedback feedback = stargate.engageSymbol(symbol);
+			
+			if(feedback.isError())
+			{
+				Component message = feedback.getFeedbackMessage();
+				AABB localBox = new AABB((getBlockPos().getX() - 4), (getBlockPos().getY() - 4), (getBlockPos().getZ() - 4), 
+						(getBlockPos().getX() + 5), (getBlockPos().getY() + 5), (getBlockPos().getZ() + 5));
+				level.getEntitiesOfClass(Player.class, localBox).stream().forEach((player) -> player.displayClientMessage(message, true));
+			}
 		}
 		else
 			System.out.println("Stargate not found");
@@ -302,7 +308,7 @@ public abstract class AbstractDHDEntity extends EnergyBlockEntity
 	
 	private void setStargateConnection(AbstractStargateEntity stargate, boolean hasDHD)
 	{
-		stargate.setDHD(hasDHD, this.hasControlCrystal);
+		stargate.setDHD(hasDHD, this.enableAdvancedProtocols);
 	}
 	
 	public static void tick(Level level, BlockPos pos, BlockState state, AbstractDHDEntity dhd)

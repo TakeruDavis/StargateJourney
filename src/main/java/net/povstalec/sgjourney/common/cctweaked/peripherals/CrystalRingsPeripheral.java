@@ -1,11 +1,11 @@
-package net.povstalec.sgjourney.cctweaked.peripherals;
+package net.povstalec.sgjourney.common.cctweaked.peripherals;
 
 import dan200.computercraft.api.lua.*;
 import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IDynamicPeripheral;
-import net.povstalec.sgjourney.block_entities.CrystalInterfaceEntity;
-import net.povstalec.sgjourney.block_entities.TransportRingsEntity;
-import net.povstalec.sgjourney.cctweaked.methods.InterfaceMethod;
+import net.povstalec.sgjourney.common.block_entities.CrystalInterfaceEntity;
+import net.povstalec.sgjourney.common.block_entities.TransportRingsEntity;
+import net.povstalec.sgjourney.common.cctweaked.methods.InterfaceMethod;
 
 import java.util.HashMap;
 import java.util.Optional;

@@ -3,7 +3,7 @@ package net.povstalec.sgjourney.common.block_entities;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import net.povstalec.sgjourney.data.RingsNetwork;
+import net.povstalec.sgjourney.common.data.RingsNetwork;
 import org.jetbrains.annotations.NotNull;
 
 import net.minecraft.core.BlockPos;

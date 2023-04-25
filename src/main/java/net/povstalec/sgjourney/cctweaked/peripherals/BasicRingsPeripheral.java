@@ -6,7 +6,6 @@ import dan200.computercraft.api.peripheral.IDynamicPeripheral;
 import net.povstalec.sgjourney.block_entities.BasicInterfaceEntity;
 import net.povstalec.sgjourney.block_entities.TransportRingsEntity;
 import net.povstalec.sgjourney.cctweaked.methods.InterfaceMethod;
-import net.povstalec.sgjourney.cctweaked.methods.TransportRingsMethods.*;
 
 import java.util.HashMap;
 
@@ -19,8 +18,6 @@ public class BasicRingsPeripheral extends BasicInterfacePeripheral implements ID
 	{
 		super(basicInterface);
 		this.rings = rings;
-		
-		registerTransportRingsMethods();
 	}
 
 	@Override
@@ -64,14 +61,18 @@ public class BasicRingsPeripheral extends BasicInterfacePeripheral implements ID
 		return rings.progress;
 	}
 
-	@SuppressWarnings("unchecked")
-	private <Rings extends TransportRingsEntity> void registerTransportRingsMethod(InterfaceMethod<Rings> function)
+	@LuaFunction
+	public void activate(ILuaContext context) throws LuaException
 	{
-		methods.put(function.getName(), (InterfaceMethod<TransportRingsEntity>) function);
+		context.executeMainThreadTask(() ->
+		{
+			boolean result = rings.activate();
+
+			if (!result)
+				throw new LuaException("No platforms found");
+
+			return null;
+		});
 	}
-	
-	public void registerTransportRingsMethods()
-	{
-		registerTransportRingsMethod(new ActivateClosest());
-	}
+
 }

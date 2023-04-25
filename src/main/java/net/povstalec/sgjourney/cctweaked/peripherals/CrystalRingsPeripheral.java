@@ -6,9 +6,9 @@ import dan200.computercraft.api.peripheral.IDynamicPeripheral;
 import net.povstalec.sgjourney.block_entities.CrystalInterfaceEntity;
 import net.povstalec.sgjourney.block_entities.TransportRingsEntity;
 import net.povstalec.sgjourney.cctweaked.methods.InterfaceMethod;
-import net.povstalec.sgjourney.cctweaked.methods.TransportRingsMethods;
 
 import java.util.HashMap;
+import java.util.Optional;
 
 public class CrystalRingsPeripheral extends CrystalInterfacePeripheral implements IDynamicPeripheral
 {
@@ -20,8 +20,6 @@ public class CrystalRingsPeripheral extends CrystalInterfacePeripheral implement
 		super(crystalInterface);
 		this.crystalInterface = crystalInterface;
 		this.rings = rings;
-		
-		registerTransportRingsMethods();
 	}
 
 	@Override
@@ -66,14 +64,32 @@ public class CrystalRingsPeripheral extends CrystalInterfacePeripheral implement
 		return rings.progress;
 	}
 
-	@SuppressWarnings("unchecked")
-	private <Rings extends TransportRingsEntity> void registerTransportRingsMethod(InterfaceMethod<Rings> function)
+	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+	@LuaFunction
+	public void activate(ILuaContext context, Optional<Integer> platform) throws LuaException
 	{
-		methods.put(function.getName(), (InterfaceMethod<TransportRingsEntity>) function);
-	}
+		context.executeMainThreadTask(() ->
+		{
+			if (platform.isPresent())
+			{
+				int platformNumber = platform.get();
+				if (platformNumber < 1 || platformNumber > 6)
+					throw new LuaException("Platform out of bounds <1, 6>");
 
-	public void registerTransportRingsMethods()
-	{
-		registerTransportRingsMethod(new TransportRingsMethods.ActivateTargetted());
+				boolean result = crystalInterface.ringUpNthPlatform(platformNumber);
+
+				if (!result)
+					throw new LuaException("Platform not found");
+			}
+			else
+			{
+				boolean result = rings.activate();
+
+				if (!result)
+					throw new LuaException("No platforms found");
+			}
+
+			return null;
+		});
 	}
 }

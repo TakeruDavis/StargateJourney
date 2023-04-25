@@ -28,6 +28,7 @@ import net.povstalec.sgjourney.packets.ClientboundRingsUpdatePacket;
 
 public class TransportRingsEntity extends SGJourneyBlockEntity
 {
+	public static final int MAX_DISTANCE = 32000;
 	ItemStack stack0;
 	ItemStack stack1;
 	ItemStack stack2;
@@ -152,13 +153,13 @@ public class TransportRingsEntity extends SGJourneyBlockEntity
 		activate(targetPos, true);
 	}
 
-	public void activate()
+	public boolean activate()
 	{
 		CompoundTag tag = RingsNetwork.get(level).getClosestRingsFromTag(
 				level.dimension().location().toString(),
 				getBlockPos(),
 				new CompoundTag(),
-				32000,
+				MAX_DISTANCE,
 				getID()
 		);
 
@@ -167,7 +168,11 @@ public class TransportRingsEntity extends SGJourneyBlockEntity
 		if(tag.size() > 0) {
 			int[] coords = tag.getCompound(tagList.get(0)).getIntArray("Coordinates");
 			activate(new BlockPos(coords[0], coords[1], coords[2]));
+
+			return true;
 		};
+
+		return false;
 	}
 	
 	public void deactivate()

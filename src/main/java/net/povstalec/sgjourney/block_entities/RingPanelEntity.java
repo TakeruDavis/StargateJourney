@@ -168,7 +168,12 @@ public class RingPanelEntity extends BlockEntity
 	
 	public String connectToRings()
 	{
-		CompoundTag rings = RingsNetwork.get(level).getClosestRingsFromTag(this.level.dimension().location().toString(), this.getBlockPos(), new CompoundTag(), 32000);
+		CompoundTag rings = RingsNetwork.get(level).getClosestRingsFromTag(
+				this.level.dimension().location().toString(),
+				this.getBlockPos(),
+				new CompoundTag(),
+				TransportRingsEntity.MAX_DISTANCE
+		);
 		
 		if(rings.isEmpty())
 			return null;

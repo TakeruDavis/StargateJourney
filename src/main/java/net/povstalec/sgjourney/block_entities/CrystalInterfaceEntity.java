@@ -3,6 +3,7 @@ package net.povstalec.sgjourney.block_entities;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import net.povstalec.sgjourney.data.RingsNetwork;
 import org.jetbrains.annotations.NotNull;
 
 import net.minecraft.core.BlockPos;
@@ -22,6 +23,10 @@ import net.povstalec.sgjourney.cctweaked.peripherals.CrystalPeripheralHolder;
 import net.povstalec.sgjourney.data.Universe;
 import net.povstalec.sgjourney.init.BlockEntityInit;
 import net.povstalec.sgjourney.init.ItemInit;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class CrystalInterfaceEntity extends BasicInterfaceEntity
 {
@@ -173,6 +178,38 @@ public class CrystalInterfaceEntity extends BasicInterfaceEntity
 		String galaxy = Universe.get(this.level).getGalaxiesFromDimension(dimension).getCompound(0).getAllKeys().iterator().next();
 		//TODO What if the Dimension is not located inside a Galaxy
 		return Universe.get(this.level).getAddressInGalaxyFromDimension(galaxy, dimension);
+	}
+
+	public boolean ringUpNthPlatform(int n)
+	{
+		if (energyBlockEntity instanceof TransportRingsEntity rings) {
+			Level level = Objects.requireNonNull(rings.getLevel());
+
+			CompoundTag tag = RingsNetwork.get(level).get6ClosestRingsFromTag(
+					level.dimension().location().toString(),
+					rings.getBlockPos(),
+					TransportRingsEntity.MAX_DISTANCE,
+					rings.getID()
+			);
+			List<String> tagList = tag.getAllKeys().stream().collect(Collectors.toList());
+
+			int ringsFound = tag.size();
+			BlockPos[] ringsPos = new BlockPos[6];
+
+			for (int i = 0; i < 6; i++) {
+				if (i < ringsFound) {
+					int[] coords = tag.getCompound(tagList.get(i)).getIntArray("Coordinates");
+					ringsPos[i] = new BlockPos(coords[0], coords[1], coords[2]);
+				}
+			}
+
+			if (n <= ringsFound) {
+				rings.activate(ringsPos[n - 1]);
+				return true;
+			}
+		}
+
+		return false;
 	}
 	
 	//============================================================================================

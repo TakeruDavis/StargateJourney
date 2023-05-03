@@ -1,8 +1,5 @@
 package net.povstalec.sgjourney.common.block_entities.stargate;
 
-import com.google.common.collect.Maps;
-import net.povstalec.sgjourney.common.config.CommonStargateConfig;
-import net.povstalec.sgjourney.common.stargate.StargatePart;
 import org.jetbrains.annotations.NotNull;
 
 import net.minecraft.core.BlockPos;
@@ -136,22 +133,7 @@ public class UniverseStargateEntity extends AbstractStargateEntity
 	@Nullable
 	public Integer getCurrentSymbol()
 	{
-		int position = (int) Math.floor(this.rotation / angle);
-
-		int positionInGroup = position % 6;
-		if (positionInGroup == 0 || positionInGroup == 5)
-			return null;
-
-		positionInGroup--;
-		int group = (int) Math.floor(position / 6.0);
-
-		int symbol = group * 4 + positionInGroup;
-
-		if (isCurrentSymbol(symbol, angle / 2)) { //test bounds
-			return symbol;
-		}
-
-		return null;
+		return currentSymbol;
 	}
 
 	public static void tick(Level level, BlockPos pos, BlockState state, UniverseStargateEntity stargate)
@@ -191,16 +173,29 @@ public class UniverseStargateEntity extends AbstractStargateEntity
 		else
 			rotation += 2;
 
-		if(rotation >= 360)
-		{
+		if(rotation >= 360) {
 			rotation -= 360;
 			oldRotation -= 360;
-		}
-		else if(rotation < 0)
-		{
+		} else if(rotation < 0) {
 			rotation += 360;
 			oldRotation += 360;
 		}
+
+		int position = (int) Math.floor(rotation / angle);
+
+		int positionInGroup = position % 6;
+		if (positionInGroup == 0 || positionInGroup == 5)
+			currentSymbol = null;
+
+		positionInGroup--;
+		int group = (int) Math.floor(position / 6.0);
+
+		int symbol = group * 4 + positionInGroup;
+
+		if (isCurrentSymbol(symbol, angle / 2)) { //test bounds
+			currentSymbol = symbol;
+		}
+
 		syncRotation();
 		setChanged();
 	}

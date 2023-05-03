@@ -45,4 +45,5 @@ public class UniverseStargateBlock extends AbstractStargateBlock
 	{
 		return createTickerHelper(type, BlockEntityInit.UNIVERSE_STARGATE.get(), UniverseStargateEntity::tick);
     }
+
 }

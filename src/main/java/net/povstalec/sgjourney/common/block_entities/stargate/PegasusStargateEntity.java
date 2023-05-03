@@ -15,6 +15,7 @@ import net.povstalec.sgjourney.common.misc.ArrayHelper;
 import net.povstalec.sgjourney.common.packets.ClientboundPegasusStargateUpdatePacket;
 import net.povstalec.sgjourney.common.stargate.Addressing;
 import net.povstalec.sgjourney.common.stargate.Stargate;
+import org.jetbrains.annotations.Nullable;
 
 public class PegasusStargateEntity extends AbstractStargateEntity
 {
@@ -146,7 +147,13 @@ public class PegasusStargateEntity extends AbstractStargateEntity
 		/*if(animationTick == 1)
 			Minecraft.getInstance().getSoundManager().play(new PegasusStargateRingSound(this, symbolBuffer));*/
 	}
-	
+	@Nullable
+	public Integer getCurrentSymbol() {
+		if (symbolBuffer == 0)
+			return null;
+
+		return addressBuffer[symbolBuffer - 1];
+	}
 	public static void tick(Level level, BlockPos pos, BlockState state, PegasusStargateEntity stargate)
 	{
 		if(level.isClientSide())
@@ -175,7 +182,7 @@ public class PegasusStargateEntity extends AbstractStargateEntity
 
 		animationTick++;
 	}
-	
+
 	@Override
 	public Stargate.Feedback resetStargate(Stargate.Feedback feedback)
 	{

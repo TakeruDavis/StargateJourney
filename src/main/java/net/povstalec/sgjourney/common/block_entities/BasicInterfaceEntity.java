@@ -2,6 +2,7 @@ package net.povstalec.sgjourney.common.block_entities;
 
 import javax.annotation.Nullable;
 
+import net.povstalec.sgjourney.common.block_entities.stargate.AbstractStargateEntity;
 import org.jetbrains.annotations.NotNull;
 
 import net.minecraft.core.BlockPos;
@@ -26,7 +27,7 @@ import net.povstalec.sgjourney.common.packets.ClientboundBasicInterfaceUpdatePac
 public class BasicInterfaceEntity extends EnergyBlockEntity
 {
 	private int desiredSymbol = 0;
-	private int currentSymbol = 0;
+	private Integer currentSymbol = null;
 	private boolean rotate = false;
 	private boolean rotateClockwise = true;
 	
@@ -171,18 +172,22 @@ public class BasicInterfaceEntity extends EnergyBlockEntity
 		
 		if(basicInterface.energyBlockEntity != null)
 		{
-			int lastSymbol = basicInterface.currentSymbol;
 			basicInterface.outputEnergy(basicInterface.getDirection());
-			
-			if(basicInterface.energyBlockEntity instanceof MilkyWayStargateEntity stargate)
-				basicInterface.rotateStargate(stargate);
 
-			if (lastSymbol != basicInterface.currentSymbol) {
-				if(!level.isClientSide()) {
-//					System.out.println("Block at " + pos + " has detected change from symbol " + lastSymbol + " to " + basicInterface.currentSymbol);
+			if (basicInterface.energyBlockEntity instanceof AbstractStargateEntity stargate) {
+				int lastSymbol = basicInterface.currentSymbol != null ? basicInterface.currentSymbol : 0;
 
-					setChanged(level, pos, state);
-					level.updateNeighborsAtExceptFromFacing(pos, state.getBlock(), state.getValue(BasicInterfaceBlock.FACING));
+				if (basicInterface.energyBlockEntity instanceof MilkyWayStargateEntity milkyWayStargate)
+					basicInterface.rotateStargate(milkyWayStargate);
+
+				basicInterface.currentSymbol = stargate.getCurrentSymbol();
+
+				int intCurrentSymbol = basicInterface.currentSymbol != null ? basicInterface.currentSymbol : 0;
+				if (lastSymbol != intCurrentSymbol) {
+					if(!level.isClientSide()) {
+						setChanged(level, pos, state);
+//						level.updateNeighborsAtExceptFromFacing(pos, state.getBlock(), state.getValue(BasicInterfaceBlock.FACING));
+					}
 				}
 			}
 		}
@@ -203,7 +208,5 @@ public class BasicInterfaceEntity extends EnergyBlockEntity
 			else
 				stargate.rotate(rotateClockwise);
 		}
-
-		this.currentSymbol = stargate.getCurrentSymbol();
 	}
 }

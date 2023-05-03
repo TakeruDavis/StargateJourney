@@ -103,7 +103,7 @@ public class ClientAccess
         }
     }
     
-    public static void updatePegasusStargate(BlockPos pos, int symbolBuffer, int[] addressBuffer, int currentSymbol)
+    public static void updatePegasusStargate(BlockPos pos, int symbolBuffer, int[] addressBuffer, Integer currentSymbol)
     {
     	final BlockEntity blockEntity = Minecraft.getInstance().level.getBlockEntity(pos);
         

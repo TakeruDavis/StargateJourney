@@ -140,7 +140,7 @@ public class MilkyWayStargateEntity extends AbstractStargateEntity
 	{
 		if(!CommonStargateConfig.enable_redstone_dialing.get())
 			return;
-		
+
 		if(this.signalMap.containsKey(part))
 			this.signalMap.remove(part);
 		this.signalMap.put(part, signal);
@@ -194,12 +194,14 @@ public class MilkyWayStargateEntity extends AbstractStargateEntity
 		
 		return Stargate.Feedback.CHEVRON_ALREADY_LOWERED;
 	}
-	
-	public int getCurrentSymbol()
+
+	@NotNull
+	public Integer getCurrentSymbol()
 	{
-		int currentSymbol;
 		double position = this.rotation / angle;
-		currentSymbol = (int) position;
+
+		int currentSymbol = (int) position;
+
 		if(position >= currentSymbol + 0.5)
 			currentSymbol++;
 		

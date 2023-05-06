@@ -36,7 +36,7 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import net.povstalec.sgjourney.common.block_entities.BasicInterfaceEntity;
-import net.povstalec.sgjourney.common.block_entities.stargate.MilkyWayStargateEntity;
+import net.povstalec.sgjourney.common.block_entities.stargate.AbstractStargateEntity;
 import net.povstalec.sgjourney.common.init.BlockEntityInit;
 import net.povstalec.sgjourney.common.init.BlockInit;
 import net.povstalec.sgjourney.common.menu.BasicInterfaceMenu;
@@ -175,8 +175,11 @@ public class BasicInterfaceBlock extends BaseEntityBlock
 
 		if (entity instanceof BasicInterfaceEntity basicInterface) {
 			BlockEntity energyBlockEntity = basicInterface.findEnergyBlockEntity();
-			if (energyBlockEntity instanceof MilkyWayStargateEntity stargate) {
-				return stargate.getCurrentSymbol() / 3;
+			if (energyBlockEntity instanceof AbstractStargateEntity stargate) {
+				Integer currentSymbol = stargate.getCurrentSymbol();
+				if (currentSymbol == null)
+					return 0;
+				return currentSymbol / 3;
 			}
 		}
 

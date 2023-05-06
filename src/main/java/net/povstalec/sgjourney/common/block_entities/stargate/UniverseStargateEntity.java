@@ -18,9 +18,14 @@ import net.povstalec.sgjourney.common.misc.ArrayHelper;
 import net.povstalec.sgjourney.common.packets.ClientboundUniverseStargateUpdatePacket;
 import net.povstalec.sgjourney.common.stargate.Addressing;
 import net.povstalec.sgjourney.common.stargate.Stargate;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 public class UniverseStargateEntity extends AbstractStargateEntity
 {
+	private static final double angle = (double) 360 / 54;
+
 	public static final int WAIT_TICKS = 20;
 	public int animationTicks = 0;
 	
@@ -30,11 +35,11 @@ public class UniverseStargateEntity extends AbstractStargateEntity
 
 	public int oldRotation = 0;
 	public int rotation = 0;
-	
+	public Integer currentSymbol = null;
 	public int[] addressBuffer = new int[0];
 	public int symbolBuffer = 0;
-	
-	public UniverseStargateEntity(BlockPos pos, BlockState state) 
+
+	public UniverseStargateEntity(BlockPos pos, BlockState state)
 	{
 		super(BlockEntityInit.UNIVERSE_STARGATE.get(), pos, state, Stargate.Gen.GEN_1);
 	}
@@ -81,12 +86,7 @@ public class UniverseStargateEntity extends AbstractStargateEntity
 	{
 		return SoundInit.UNIVERSE_DIAL_FAIL.get();
 	}
-	
-	public double angle()
-	{
-		return (double) 360 / 54;
-	}
-	
+
 	public int getRotation()
 	{
 		return rotation;
@@ -118,7 +118,7 @@ public class UniverseStargateEntity extends AbstractStargateEntity
 		}
 		
 		addressBuffer = ArrayHelper.growIntArray(addressBuffer, symbol);
-		PacketHandlerInit.INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(this.worldPosition)), new ClientboundUniverseStargateUpdatePacket(this.worldPosition, this.symbolBuffer, this.addressBuffer, this.animationTicks, this.rotation, this.oldRotation));
+		synchronizeWithClient(level);
 		return Stargate.Feedback.SYMBOL_ENCODED;
 	}
 	
@@ -129,63 +129,94 @@ public class UniverseStargateEntity extends AbstractStargateEntity
 		animationTicks++;
 		return super.encodeChevron(symbol);
 	}
-	
+
+	@Nullable
+	public Integer getCurrentSymbol()
+	{
+		return currentSymbol;
+	}
+
 	public static void tick(Level level, BlockPos pos, BlockState state, UniverseStargateEntity stargate)
 	{
-		if(!stargate.isConnected() && stargate.addressBuffer.length > stargate.symbolBuffer)
+		stargate.rotate();
+
+		AbstractStargateEntity.tick(level, pos, state, stargate);
+	}
+
+	private void rotate()
+	{
+		if(!isConnected() && addressBuffer.length > symbolBuffer)
 		{
-			if(stargate.animationTicks <= 0)
-				stargate.rotateToSymbol(stargate.addressBuffer[stargate.symbolBuffer]);
-			else if(stargate.animationTicks >= WAIT_TICKS)
-				stargate.animationTicks = 0;
-			else if(stargate.animationTicks > 0)
-				stargate.animationTicks++;
+			if(animationTicks <= 0)
+				rotateToSymbol(addressBuffer[symbolBuffer]);
+			else if(animationTicks >= WAIT_TICKS)
+				animationTicks = 0;
+			else if(animationTicks > 0)
+				animationTicks++;
 		}
-		else if(!stargate.isConnected() && stargate.addressBuffer.length == 0)
+		else if(!isConnected() && addressBuffer.length == 0)
 		{
-			stargate.rotateToDefault();
+			rotateToDefault();
 		}
 		else if(!level.isClientSide())
-			PacketHandlerInit.INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(stargate.worldPosition)), 
-					new ClientboundUniverseStargateUpdatePacket(stargate.worldPosition, stargate.symbolBuffer, stargate.addressBuffer, stargate.animationTicks, stargate.rotation, stargate.oldRotation));
-		
-		AbstractStargateEntity.tick(level, pos, state, (AbstractStargateEntity) stargate);
+			PacketHandlerInit.INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)),
+					new ClientboundUniverseStargateUpdatePacket(worldPosition, symbolBuffer, addressBuffer, animationTicks, rotation, oldRotation));
+
+		setChanged();
 	}
 	
 	public void rotate(boolean clockwise)
 	{
+		oldRotation = rotation;
 		if(clockwise)
 			rotation -= 2;
 		else
 			rotation += 2;
-		
-		if(rotation >= 360)
-		{
+
+		if(rotation >= 360) {
 			rotation -= 360;
 			oldRotation -= 360;
-		}
-		else if(rotation < 0)
-		{
+		} else if(rotation < 0) {
 			rotation += 360;
 			oldRotation += 360;
 		}
+
+		int position = (int) Math.floor(rotation / angle);
+
+		int positionInGroup = position % 6;
+		if (positionInGroup == 0 || positionInGroup == 5)
+			currentSymbol = null;
+
+		positionInGroup--;
+		int group = (int) Math.floor(position / 6.0);
+
+		int symbol = group * 4 + positionInGroup;
+
+		if (isCurrentSymbol(symbol, angle / 2)) { //test bounds
+			currentSymbol = symbol;
+		}
+
+		syncRotation();
 		setChanged();
 	}
-	
-	public boolean isCurrentSymbol(int desiredSymbol)
+
+	public boolean isCurrentSymbol(int desiredSymbol) {
+		return isCurrentSymbol(desiredSymbol, 1.0);
+	}
+
+	public boolean isCurrentSymbol(int desiredSymbol, double tolerance)
 	{
 		int whole = desiredSymbol / 4;
 		int leftover = desiredSymbol % 4;
 		
-		double desiredPosition = 3 * (angle() / 2) + whole * 40 + (angle() * leftover);
+		double desiredPosition = 3 * (angle / 2) + whole * 40 + (angle * leftover);
 		
-		double position = (double) rotation;
-		double lowerBound = (double) (desiredPosition - 1);
-		double upperBound = (double) (desiredPosition + 1);
+		double position = rotation;
+		double lowerBound = desiredPosition - tolerance;
+		double upperBound = desiredPosition + tolerance;
 		
 		if(position > lowerBound && position < upperBound)
 			return true;
-		
 		return false;
 	}
 	
@@ -197,12 +228,10 @@ public class UniverseStargateEntity extends AbstractStargateEntity
 	
 	private void rotateToSymbol(int desiredSymbol)
 	{
-		oldRotation = rotation;
-		
 		if(isCurrentSymbol(desiredSymbol))
 		{
 			if(!level.isClientSide())
-				PacketHandlerInit.INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(this.worldPosition)), new ClientboundUniverseStargateUpdatePacket(this.worldPosition, this.symbolBuffer, this.addressBuffer, this.animationTicks, this.rotation, this.oldRotation));
+				synchronizeWithClient(level);
 			
 			if(isCurrentSymbol(0))
 				this.lockPrimaryChevron();
@@ -210,7 +239,7 @@ public class UniverseStargateEntity extends AbstractStargateEntity
 				this.encodeChevron(desiredSymbol);
 			
 			if(!level.isClientSide())
-				PacketHandlerInit.INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(this.worldPosition)), new ClientboundUniverseStargateUpdatePacket(this.worldPosition, this.symbolBuffer, this.addressBuffer, this.animationTicks, this.rotation, this.oldRotation));
+				synchronizeWithClient(level);
 		}
 		else
 			rotate(getBestRotationDirection(desiredSymbol));
@@ -218,15 +247,14 @@ public class UniverseStargateEntity extends AbstractStargateEntity
 	
 	private void rotateToDefault()
 	{
-		oldRotation = rotation;
-		
 		if(rotation == 0)
 		{
 			if(!level.isClientSide())
-				PacketHandlerInit.INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(this.worldPosition)), new ClientboundUniverseStargateUpdatePacket(this.worldPosition, this.symbolBuffer, this.addressBuffer, this.animationTicks, this.rotation, this.oldRotation));
+				synchronizeWithClient(level);
 		}
-		else
-			rotate(getBestRotationDirection(0.0D, (double) rotation));
+		else {
+			rotate(getBestRotationDirection(0.0D, rotation));
+		}
 	}
 	
 	private boolean getBestRotationDirection(int desiredSymbol)
@@ -234,13 +262,12 @@ public class UniverseStargateEntity extends AbstractStargateEntity
 		int whole = desiredSymbol / 4;
 		int leftover = desiredSymbol % 4;
 		
-		double desiredPosition = 3 * (angle() / 2) + whole * 40 + angle() * leftover;
-		
-		double position = (double) rotation;
-		
-		return getBestRotationDirection(desiredPosition, position);
+		double desiredPosition = 3 * (angle / 2) + whole * 40 + angle * leftover;
+
+
+		return getBestRotationDirection(desiredPosition, rotation);
 	}
-	
+
 	private static boolean getBestRotationDirection(double desiredRotation, double rotation)
 	{
 		
@@ -266,5 +293,17 @@ public class UniverseStargateEntity extends AbstractStargateEntity
 		addressBuffer = new int[0];
 		return super.resetStargate(feedback);
 	}
-	
+	private void synchronizeWithClient(Level level)
+	{
+		if(level.isClientSide())
+			return;
+		PacketHandlerInit.INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(this.worldPosition)), new ClientboundUniverseStargateUpdatePacket(this.worldPosition, symbolBuffer, addressBuffer, animationTicks, rotation, oldRotation));
+	}
+
+	private void syncRotation()
+	{
+		this.oldRotation = this.rotation;
+		if(!this.level.isClientSide())
+			synchronizeWithClient(this.level);
+	}
 }

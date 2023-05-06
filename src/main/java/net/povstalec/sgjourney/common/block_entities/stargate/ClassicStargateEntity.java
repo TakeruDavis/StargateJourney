@@ -66,8 +66,9 @@ public class ClassicStargateEntity extends AbstractStargateEntity
 	{
 		this.rotation = rotation;
 	}
-	
-	public int getCurrentSymbol()
+
+	@NotNull
+	public Integer getCurrentSymbol()
 	{
 		int currentSymbol;
 		double position = rotation * 2 / angle();

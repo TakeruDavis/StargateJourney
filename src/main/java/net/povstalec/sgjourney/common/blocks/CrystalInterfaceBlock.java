@@ -23,7 +23,7 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import net.povstalec.sgjourney.common.block_entities.CrystalInterfaceEntity;
-import net.povstalec.sgjourney.common.block_entities.stargate.MilkyWayStargateEntity;
+import net.povstalec.sgjourney.common.block_entities.stargate.AbstractStargateEntity;
 import net.povstalec.sgjourney.common.init.BlockEntityInit;
 import net.povstalec.sgjourney.common.init.BlockInit;
 import net.povstalec.sgjourney.common.menu.CrystalInterfaceMenu;
@@ -118,14 +118,18 @@ public class CrystalInterfaceBlock extends BasicInterfaceBlock
 
 		if (entity instanceof CrystalInterfaceEntity crystalInterface) {
 			BlockEntity energyBlockEntity = crystalInterface.findEnergyBlockEntity();
-			if (energyBlockEntity instanceof MilkyWayStargateEntity stargate) {
+			if (energyBlockEntity instanceof AbstractStargateEntity stargate) {
 				int offset = 0;
 				if (crystalInterface.getInputSignal() >= 7)
 					offset = 26;
 				else if (crystalInterface.getInputSignal() > 0) {
 					offset = 13;
 				}
-				int output = stargate.getCurrentSymbol() - offset;
+				Integer currentSymbol = stargate.getCurrentSymbol();
+				if (currentSymbol == null)
+					return 0;
+
+				int output = currentSymbol - offset;
 
 //				System.out.println("Offset: " + offset + " Current symbol: " + stargate.getCurrentSymbol() + " Output: " + output);
 

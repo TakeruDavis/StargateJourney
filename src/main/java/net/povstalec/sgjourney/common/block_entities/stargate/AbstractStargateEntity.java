@@ -42,6 +42,7 @@ import net.povstalec.sgjourney.common.stargate.PointOfOrigin;
 import net.povstalec.sgjourney.common.stargate.Stargate;
 import net.povstalec.sgjourney.common.stargate.Symbols;
 import net.povstalec.sgjourney.common.stargate.Wormhole;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractStargateEntity extends SGJourneyBlockEntity
 {
@@ -149,7 +150,10 @@ public abstract class AbstractStargateEntity extends SGJourneyBlockEntity
 	//============================================================================================
 	//******************************************Dialing*******************************************
 	//============================================================================================
-	
+
+	@Nullable
+	abstract public Integer getCurrentSymbol();
+
 	public Stargate.Feedback engageSymbol(int symbol)
 	{
 		if(level.isClientSide())

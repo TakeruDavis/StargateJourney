@@ -86,6 +86,9 @@ public class CrystalInterfaceBlock extends BasicInterfaceBlock
 	{
 		if(level.isClientSide())
 			return;
+		
+		level.setBlock(pos, state.setValue(CONNECTED, true), 3);
+		level.scheduleTick(pos, this, 2);
 
 		Direction direction = state.getValue(FACING);
 		BlockPos targetPos = pos.relative(direction);

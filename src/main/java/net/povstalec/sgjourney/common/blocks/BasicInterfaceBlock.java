@@ -8,7 +8,9 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
@@ -45,7 +47,7 @@ import net.povstalec.sgjourney.common.menu.BasicInterfaceMenu;
 public class BasicInterfaceBlock extends BaseEntityBlock
 {
 	public static final DirectionProperty FACING = BlockStateProperties.FACING;
-	public static final BooleanProperty CONNECTED = BooleanProperty.create("connected");
+	public static final BooleanProperty CONNECTED = BooleanProperty.create("detected_connection");
 	
 	public BasicInterfaceBlock(Properties properties)
 	{
@@ -149,13 +151,21 @@ public class BasicInterfaceBlock extends BaseEntityBlock
 		if(level.isClientSide())
 			return;
 		
-		level.setBlock(pos, state.cycle(CONNECTED), 3);
+		level.setBlock(pos, state.setValue(CONNECTED, true), 3);
+		
+		level.scheduleTick(pos, this, 2);
 		
 		Direction direction = state.getValue(FACING);
 		BlockPos targetPos = pos.relative(direction);
 		
 		if(targetPos.equals(pos2) && level.getBlockEntity(pos) instanceof BasicInterfaceEntity basicInterface && basicInterface.updateInterface())
 			level.updateNeighborsAtExceptFromFacing(pos, state.getBlock(), state.getValue(FACING));
+	}
+	
+	@Override
+	public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource source)
+	{
+		level.setBlock(pos, state.setValue(CONNECTED, false), 3);
 	}
 	
 	@Nullable

@@ -32,6 +32,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
@@ -44,6 +45,7 @@ import net.povstalec.sgjourney.common.menu.BasicInterfaceMenu;
 public class BasicInterfaceBlock extends BaseEntityBlock
 {
 	public static final DirectionProperty FACING = BlockStateProperties.FACING;
+	public static final BooleanProperty CONNECTED = BooleanProperty.create("connected");
 	
 	public BasicInterfaceBlock(Properties properties)
 	{
@@ -53,7 +55,7 @@ public class BasicInterfaceBlock extends BaseEntityBlock
 	 
 	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> state)
 	{
-		state.add(FACING);
+		state.add(FACING).add(CONNECTED);
 	}
 	 
 	public BlockState rotate(BlockState state, Rotation rotation)
@@ -146,6 +148,8 @@ public class BasicInterfaceBlock extends BaseEntityBlock
 	{
 		if(level.isClientSide())
 			return;
+		
+		level.setBlock(pos, state.cycle(CONNECTED), 3);
 		
 		Direction direction = state.getValue(FACING);
 		BlockPos targetPos = pos.relative(direction);

@@ -125,13 +125,15 @@ public class CrystalInterfaceBlock extends BasicInterfaceBlock
 			if (energyBlockEntity instanceof AbstractStargateEntity stargate) {
 				int offset = 0;
 				if (crystalInterface.getInputSignal() >= 7)
-					offset = 26;
+					offset = 28;
 				else if (crystalInterface.getInputSignal() > 0) {
-					offset = 13;
+					offset = 14;
 				}
 				Integer currentSymbol = stargate.getCurrentSymbol();
 				if (currentSymbol == null)
 					return 0;
+
+				currentSymbol++;
 
 				int output = currentSymbol - offset;
 

@@ -195,7 +195,10 @@ public class BasicInterfaceBlock extends BaseEntityBlock
 				Integer currentSymbol = stargate.getCurrentSymbol();
 				if (currentSymbol == null)
 					return 0;
-				return currentSymbol / 3;
+
+				currentSymbol++;
+
+				return (int) Math.ceil(currentSymbol / 3.0);
 			}
 		}
 
